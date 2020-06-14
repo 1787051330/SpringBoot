@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div class="layui-col-md3">
+    <div class="layui-card">
+        <div class="layui-card-header">角色树展示
+        </div>
+        <div class="layui-card-body">
+            <!--ztree树-->
+            <ul class="ztree" id="roleTree"></ul>
+        </div>
+    </div>
+</div>
+<div class="layui-col-sm1">
+    <div class="layui-card">
+        <div class="layui-card-header"></div>
+    </div>
+</div>
+<div class="layui-col-md3">
+    <div class="layui-card">
+        <div class="layui-card-header" id="roleRight">
+        </div>
+        <div class="layui-card-body">
+            <!--ztree树-->
+            <ul class="ztree" id="rightTree"></ul>
+        </div>
+    </div>
+</div>
+<div class="layui-col-sm1">
+    <div class="layui-card">
+        <div class="layui-card-header"></div>
+    </div>
+</div>
+<div class="layui-col-md3">
+    <div class="layui-card">
+        <div class="layui-card-header" id="rightUser">
+        </div>
+        <div class="layui-card-body">
+            <!--ztree树-->
+            <ul class="ztree" id="userTree"></ul>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+
+    var roleSetting = {
+        view:{
+            selectedMulti:false
+        },
+        callback:{
+            onClick:queryRoletoRight,
+        }
+    }
+    var rightSetting = {
+        data: {
+            simpleData: {
+                enable: true,
+            }
+        },
+        check:{
+            enable:true,
+            chkStyle:"checkbox",
+            chkboxType: { "Y": "p", "N": "s" }
+        }
+    }
+    var rightUserSetting = {
+        view:{
+            selectedMulti:false
+        },
+        check:{
+            enable:true,
+            chkStyle:"checkbox",
+        }
+    }
+
+    layui.use(['table'],function () {
+        var table = layer.table;
+        $.ajax({
+            url:"/roleRights/queryRoleTree",
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                $.fn.zTree.init($("#roleTree"),roleSetting,result)
+            }
+        })
+
+    })
+
+
+    function queryRoletoRight(event,treeId,treeNode){
+        /**/
+        var roleId = treeNode.id;
+        var roleRightHtml = "";
+        var rightUserHtml = "";
+        roleRightHtml += "角色赋予权限\n" +
+            "        <button type=\"button\" class=\"layui-btn layui-btn-sm layui-btn-radius\" onclick=\"addUserRole()\">给角色赋予权限</button>";
+        rightUserHtml += "角色授予用户\n" +
+            "        <button type=\"button\" class=\"layui-btn layui-btn-sm layui-btn-radius\" onclick=\"addUserRole()\">给角色赋予用户</button>";
+        $("#roleRight").html(roleRightHtml);
+        $("#rightUser").html(rightUserHtml);
+        $.ajax({
+            url:"/roleRights/queryRightTree",
+            data:{
+                roleId:roleId
+            },
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                $.fn.zTree.init($("#rightTree"),rightSetting,result).expandAll(true);
+            }
+        })
+        $.ajax({
+            url:"/roleRights/queryRightUserTree",
+            data:{
+                roleId:roleId
+            },
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                $.fn.zTree.init($("#userTree"),rightUserSetting,result).expandAll(true);
+            }
+        })
+    }
+    function addUserRole(){
+        //获取角色树
+        var roleTreeObj = $.fn.zTree.getZTreeObj("roleTree");
+        var roleNodes = roleTreeObj.getSelectedNodes();
+        var roleId = roleNodes[0].id;
+        //获取权限树
+        var rightTreeObj = $.fn.zTree.getZTreeObj("rightTree");
+        //获取选中的ztree节点
+        var rightNodes = rightTreeObj.getCheckedNodes(true);
+        //声明空数组
+        var rightArray = [];
+        //循环往数组里放选中节点的ID
+        for(var i = 0 ; i < rightNodes.length ; i ++){
+            rightArray.push(rightNodes[i].id)
+        }
+        var rightIds = JSON.stringify(rightArray);
+        //发起ajax请求进行赋权
+        $.ajax({
+            url:"/roleRights/addRightToRole",
+            data:{
+                roleId:roleId,
+                rightIds:rightIds
+            },
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                if(result.code == 200){
+                    layer.msg("角色赋予权限成功");
+                }else{
+                    layer.msg("角色赋予权限失败");
+                }
+            }
+        })
+    }
+
+</script>
+</body>
+</html>

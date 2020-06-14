@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fh.mapper.IAreaMapper">
+
+    <select id="areaDept" resultType="com.fh.bean.vo.AreaBeanVo">
+        select code_p code,name from t_province
+    </select>
+
+    <select id="queryCity" parameterType="java.lang.String" resultType="com.fh.bean.vo.AreaBeanVo">
+            select code_c code,name from t_city where code_p = #{code}
+    </select>
+
+    <select id="queryArea" parameterType="java.lang.String" resultType="com.fh.bean.vo.AreaBeanVo">
+        select code_a code,name from t_area where code_c = #{code}
+    </select>
+
+</mapper>

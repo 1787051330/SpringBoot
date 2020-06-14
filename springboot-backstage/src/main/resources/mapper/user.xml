@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fh.mapper.IMapperUserPo">
+
+    <select id="querySearchUser" parameterType="java.lang.Integer" resultType="com.fh.bean.vo.UserBeanVo">
+SELECT
+u.id,u.userName,u.realName,u.`password`,u.birthday,u.sex,u.phone,u.email,u.idcard,u.provinceCode,u.cityCode,u.areaCode,u.imgUrl,u.`status`,u.deptId,d.id,d.deptName,d.pid,d.`status`
+FROM
+t_user u
+LEFT JOIN
+t_dept d
+ON
+u.deptId = d.id
+where
+u.deptId = #{deptId}
+    </select>
+
+</mapper>

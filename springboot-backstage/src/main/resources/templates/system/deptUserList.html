@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div class="layui-row">
+    <div class="layui-col-md4">
+            <div class="layui-card">
+                <div class="layui-card-header">部门维护
+                    <div class="layui-btn-group" style="margin-left: 20px">
+                        <button type="button" class="layui-btn layui-btn-sm" id="addDeptTree"><i class="layui-icon"></i></button>
+                        <button type="button" class="layui-btn layui-btn-normal layui-btn-sm" id="updateDeptTree"><i class="layui-icon"></i></button>
+                        <button type="button" class="layui-btn layui-btn-danger layui-btn-sm" id="delDeptTree"><i class="layui-icon"></i></button>
+                    </div>
+                </div>
+                <div class="layui-card-body">
+                    <!--ztree树-->
+                    <ul class="ztree" id="deptTree"></ul>
+                </div>
+            </div>
+    </div>
+    <div class="layui-col-md1">
+        <div class="layui-card">
+            <div class="layui-card-header"></div>
+        </div>
+    </div>
+    <div class="layui-col-md7">
+        <div class="layui-card">
+            <div class="layui-card-header">用户列表</div>
+            <div class="layui-card-body">
+                <table class="layui-hide" id="userTable" lay-filter="userTable">
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="addUser">添加用户</button>
+        <button class="layui-btn layui-btn-sm" lay-event="delAllUser">批量删除用户</button>
+    </div>
+</script>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="updateUser">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delUser">删除</a>
+</script>
+<script>
+    var settings = {
+        view:{
+            selectedMulti:false
+        },
+        callback:{
+            onClick:queryDeptUser
+        }
+    };
+    var limit;
+    var page;
+    var deptId;
+    function queryDeptUser(event,treeId,treeNode){
+        deptId = treeNode.id;
+                layui.use(['table','form','layer'],function () {
+                    var table = layui.table;
+                    table.render({
+                        elem:"#userTable"
+                        ,url:'/users/queryUserSearchList',
+                        where:{
+                            deptId:deptId,
+                            limit:limit,
+                            page:page
+                        }
+                        ,toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+                        ,cellMinWidth: 80 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+                        ,height:600
+                        ,cols:[
+                            [
+                                {field:"id", title: 'ID',},
+                                {field:"userName", title: '用户名',},
+                                {field:"realName", title: '真实姓名',},
+                                {field:"sex", title: '性别',templet:function (data) {
+                                        if(data == 1){
+                                            return "男";
+                                        }else{
+                                            return "女";
+                                        }
+                                    }},
+                                {field:"phone", title: '用户手机号',},
+                                {field:"birthday", title: '生日',},
+                                {field:"email", title: '用户邮箱',},
+                                {field:"idcard", title: '身份证号',},
+                                {title:'籍贯',align:'center',colspan:"3"},
+                                {field:"provinceName", title: '省的编码',},
+                                {field:"cityName", title: '市的编码',},
+                                {field:"areaName", title: '县&区的编码',},
+                                {field:"imgUrl", title: '个人头像路径',},
+                                {field:"status", title: '用户状态',templet:function(data){
+                                    if(data == 1){
+                                        return "有效";
+                                    }else{
+                                        return "无效";
+                                    }
+                            }},
+                                {field:"deptName", title: '部门名称'}
+                                ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
+                            ]
+                        ],
+                        page:{
+                            layout: ['count', 'prev', 'page', 'next', 'skip','limit'] //自定义分页布局
+                            ,limit:10
+                            ,limits:[2,5,10,15,20]
+                        }
+                    })
+                })
+
+    }
+
+        layui.use(['table','form','layer','laydate'],function () {
+        var form = layui.form;
+        var layer=layui.layer;
+        var table = layui.table;
+        var laydate = layui.laydate;
+       var userTable = table.render({
+            elem:"#userTable"
+            ,url:'/users/queryUserSearchList'
+            ,toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+            ,cellMinWidth: 80 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+           ,height:600
+            ,cols:[
+               [
+                    {field:"userName", title: '用户名',fixed:"left"},
+                    {field:"realName", title: '真实姓名',fixed:"left"},
+                    {field:"sex", title: '性别',templet:function (data) {
+                            if(data == 1){
+                                return "男";
+                            }else{
+                                return "女";
+                            }
+                        }},
+                    {field:"phone", title: '用户手机号',fixed:"left",rowspan:"2"},
+                    {field:"birthday", title: '生日',rowspan:"2"},
+                    {field:"email", title: '邮箱',fixed:"left",rowspan:"2"},
+                    {field:"idcard", title: '身份证号',rowspan:"2"},
+                   {field:"provinceName", title: '省',},
+                   {field:"cityName", title: '市',},
+                   {field:"areaName", title: '区',},
+                    {field:"imgUrl", title: '个人头像路径',rowspan:"2"},
+                    {field:"status", title: '用户状态',rowspan:"2"},
+                    {field:"deptName", title: '部门名称',rowspan:"2",fixed:"right"}
+                    ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150,rowspan:"2"}
+                ],
+
+            ]
+           ,
+            page:{
+                layout: ['count', 'prev', 'page', 'next', 'skip','limit'] //自定义分页布局
+                ,limit:10
+                ,limits:[2,5,10,15,20]
+            }
+        })
+
+            table.on('tool(userTable)',function (obj) {
+                var userId = obj.data.id;
+                if(obj.event === "updateUser"){
+                    layer.open({
+                        type:1,
+                        title:"用户修改",
+                        area:["60%","60%"],
+                        btn:["保存","关闭"],
+                        content:$("#UserHtml").html(),
+                        success:function(layero,index){
+                            queryUserById(userId);
+                            getProCode("");
+
+                            laydate.render({
+                                elem:"#birthday"
+                            })
+                            form.render();
+                        },
+                        yes:function(layero,index){
+                            $.ajax({
+                                url:"/users/updateUser",
+                                data:$("#userFormHtml").serialize(),
+                                dataType:"json",
+                                success:function(result){
+                                    if(result.code == 200){
+                                        layer.alert("修改成功");
+                                        layer.closeAll();
+                                        userTable.reload({
+                                            page:{
+                                                curr:1
+                                            }
+                                        })
+                                    }
+                                }
+                            })
+                        }
+                    })
+                }else if(obj.event === "delUser"){
+                    layer.confirm("确认要删除吗?",function () {
+                        $.ajax({
+                            url:"/users/delUser",
+                            data:{
+                                userId:userId
+                            },
+                            dataType:"json",
+                            type:"post",
+                            success:function(result){
+                                if(result.code == 200){
+                                    layer.msg("删除成功");
+                                    userTable.reload({
+                                        page:{
+                                            curr:1
+                                        }
+                                    })
+                                }
+                            }
+                        })
+                    })
+
+                }
+
+
+            })
+            table.on('toolbar(userTable)',function (obj) {
+                switch (obj.event) {
+                    case 'addUser':
+                        addUser();
+                        break;
+                }
+            })
+
+            function queryUserById(userId){
+                $.ajax({
+                    url:"/users/queryUserById",
+                    data:{
+                        userId:userId,
+                    },
+                    dataType:"json",
+                    type:"post",
+                    success:function(result){
+                        var provinceCode = result.provinceCode;
+                        var cityCode = result.cityCode;
+                        var areaCode = result.areaCode;
+                        $("#userName").val(result.userName);
+                        $("#realName").val(result.realName);
+                        $("#birthday").val(result.birthday);
+                        if(result.sex == 1){
+                            $("#userFormHtml [name='sex'][value='1']").attr("checked",true);
+                        }else{
+                            $("#userFormHtml [name='sex'][value='2']").attr("checked",true);
+                        }
+                        $("#phone").val(result.phone);
+                        $("#email").val(result.email);
+                        $("#idCard").val(result.idcard);
+                        $("#selectDept").val(result.deptId)
+                        $("#hidenID").val(result.id);
+                        getProCode(provinceCode);
+                        getCity(provinceCode,cityCode);
+                        getArea(cityCode,areaCode);
+                        selectTree(result.deptId);
+                        idCardBlur();
+
+                    }
+                })
+            }
+
+
+            function addUser(){
+                layer.open({
+                    type:1,
+                    title:"用户新增",
+                    content:$("#UserHtml").html(),
+                    area:["60%","98%"],
+                    btn:["保存","关闭"],
+                    success:function(layero,index){
+                        //给身份证号绑定失去焦点事件
+                        idCardBlur();
+                        selectTree();
+                        laydate.render({
+                            elem:"#birthday"
+                        }),
+                        getProCode("");
+                      form.render();
+                    },
+                    yes:function () {
+                        //ajax请求进行用户新增
+                        $.ajax({
+                            url:"/users/addDeptUser",
+                            data:$("#userFormHtml").serialize(),
+                            dataType:"json",
+                            type:"post",
+                            success:function(result){
+                                if(result.code == 200){
+                                    layer.alert(result.msg);
+                                    layer.closeAll();
+                                    userTable.reload({
+                                        page:{
+                                            curr:1
+                                        }
+                                    })
+                                }
+                            }
+                        })
+                    }
+                })
+            }
+
+            function selectTree(deptId){
+                $.ajax({
+                    url:"/depts/queryDeptTree",
+                    dataType:"json",
+                    type:"post",
+                    success:function (result) {
+                        initSelectTree("selectDept",false,null,result,"deptId");
+                        if(deptId != null){
+                            var deptTree=$.fn.zTree.getZTreeObj("selectDeptTree");
+                            var treeNode=deptTree.getNodeByParam("id",deptId);
+                            deptTree.selectNode(treeNode);
+                            deptTree.setting.callback.onClick(null,deptTree.setting.treeId,treeNode);
+                        }
+                    }
+                });
+            }
+
+            //给省绑定change事件
+            form.on('select(provinceCode)',function (data) {
+                var code = data.value;
+                if(code == null || code == ""){
+                    concatOptions($("#cityCode"),[],"请选择市")
+                    concatOptions($("#areaCode"),[],"请选择县/区")
+                    return false;
+                }
+                getCity(code);
+            })
+            //获取县/区的数据
+            function getArea(code,selectedCode){
+                $.ajax({
+                    url:"/area/queryArea",
+                    data:{code:code},
+                    dataType:"json",
+                    type:"post",
+                    success:function(result){
+                        concatOptions($("#areaCode"),result,"请选择县/区",selectedCode);
+                    }
+                })
+            }
+
+            //获取市的数据
+            function getCity(code,selectedCode){
+                $.ajax({
+                    url:"/area/queryCity",
+                    type:"post",
+                    dataType:"json",
+                    data:{
+                        code:code
+                    },
+                    success:function(result){
+                        concatOptions($("#cityCode"),result,"请选择市",selectedCode)
+                    }
+                })
+            }
+            //给市绑定onchange事件
+            form.on('select(cityCode)',function (data) {
+                var code = data.value;
+                getArea(code);
+            })
+            //获取省的数据
+            function getProCode(selectedCode){
+                $.ajax({
+                    url:"/area/areaDept",
+                    dataType:"json",
+                    type:"post",
+                    success:function(result){
+                        concatOptions($("#provinceCode"),result,"请选择省",selectedCode);
+                    }
+                })
+            }
+
+            //拼接potion的方法
+            function concatOptions(id,data,type,selectedCode){
+                var options = "<option value=''>"+type+"</option>";
+                for(var i = 0 ; i < data.length;i++){
+                    if(selectedCode == data[i].code){
+                        options += "<option value='"+data[i].code+"' selected>"+data[i].name+"</option>";
+                    }else{
+                        options += "<option value='"+data[i].code+"'>"+data[i].name+"</option>";
+                    }
+
+                }
+                id.html(options);
+                form.render();
+            }
+
+            //身份证号解析
+            function idCardBlur(){
+                $("#idCard").on("blur",function () {
+                    var idcard = this.value;
+                    if(!checkIDCard(idcard)){
+                        layer.msg("身份证号不符合规则");
+                        return false;
+                    }
+                    var provincedCode = idcard.substr(0,2)+"0000";
+                    var cityCode = idcard.substr(0,4)+"00";
+                    var areaCode = idcard.substr(0,6);
+                    var year = idcard.substr(6,4);
+                    var month = idcard.substr(10,2);
+                    var day = idcard.substr(12,2);
+                    var sex = idcard.substr(16,1);
+                    var birthday = year+"-"+month+"-"+day;
+                    $("#birthday").val(birthday);
+                    if(sex%2 == 0){
+                        $("#userFormHtml [name='sex'][value='2']").attr("checked",true);
+                    }else{
+                        $("#userFormHtml [name='sex'][value='1']").attr("checked",true);
+                    }
+                    getProCode(provincedCode);
+                    getCity(provincedCode,cityCode);
+                    getArea(cityCode,areaCode);
+                    form.render();
+                })
+
+            }
+            limit = userTable.config.limit;
+            page = userTable.config.page.curr;
+        $.ajax({
+            url:"/depts/queryDeptTree",
+            dataType:"json",
+            type:"post",
+            success:function (result) {
+                $.fn.zTree.init($("#deptTree"),settings,result).expandAll(true);
+            }
+        });
+        $("#updateDeptTree").on('click',function () {
+            var treeObj = $.fn.zTree.getZTreeObj('deptTree');
+            var nodes = treeObj.getSelectedNodes();
+            var getNodes = treeObj.getNodes();
+            if(nodes == null || nodes.length == 0){
+                layer.alert("请选择部门,再进行修改")
+                return false;
+            }
+            layer.open({
+                type:1,
+                title:"部门修改",
+                content: $("#deptUpdateHtml").html(),
+                area: ['30%', '30%'],
+                btn:['保存','关闭'],
+                success:function(layero,index){
+                    queryDeptId(deptId);
+                    form.render();
+                },
+                yes:function (layero,index) {
+                    $.ajax({
+                        url:"/depts/deptUpdate",
+                        data:$("#deptUpdateForm").serialize(),
+                        dataType:"json",
+                        type:"post",
+                        success:function(result){
+                            if(result.code == 200){
+                                layer.msg("修改成功");
+                                if(getNodes.length>0){
+                                    nodes[0].name = result.data.deptName;
+                                    nodes[0].id = result.data.id;
+                                    nodes[0].pid = result.data.pid;
+                                    treeObj.updateNode(nodes[0]);
+                                }
+                                layer.closeAll()
+                            }
+                        }
+                    })
+                    form.render();
+                }
+            })
+
+            function queryDeptId(deptId){
+                $.ajax({
+                    url:"/depts/queryDeptId",
+                    data:{deptId:deptId},
+                    type:"post",
+                    dataType:"json",
+                    success:function(result){
+                        var html = "";
+                        html+="<input type=\"hidden\" name='id' value='"+result.id+"'/>\n" +
+                            "        <div class=\"layui-form-item\">\n" +
+                            "            <label class=\"layui-form-label\">部门名称</label>\n" +
+                            "            <div class=\"layui-input-inline\">\n" +
+                            "                <input type=\"text\" name=\"deptName\" value='"+result.deptName+"' required lay-verify=\"required\" placeholder=\"请输入部门名称\" autocomplete=\"off\" class=\"layui-input\">\n" +
+                            "            </div>\n" +
+                            "        </div>"
+                        html+="<input type=\"hidden\" name='pid' value='"+result.pid+"'/>"
+                        $("#deptUpdateForm").html(html);
+                    }
+                })
+            }
+
+        })
+            $("#delDeptTree").on('click',function () {
+                var treeObj = $.fn.zTree.getZTreeObj('deptTree');
+                var nodes = treeObj.getSelectedNodes();
+                if(nodes == null || nodes.length == 0){
+                    layer.alert("请选中部门,再进行删除");
+                    return false;
+                }
+                        layer.confirm("确认要删除吗？",function() {
+                            $.ajax({
+                                url:"/depts/delDept",
+                                data:{
+                                    deptId:deptId
+                                },
+                                type:"post",
+                                dataType:"json",
+                                success:function(result){
+                                    if(result.code == 200){
+                                        layer.msg("删除成功");
+                                        for (var i=0, l=nodes.length; i < l; i++) {
+                                            treeObj.removeNode(nodes[i]);
+                                        }
+                                    }
+                                }
+                            })
+                })
+
+            })
+        $("#addDeptTree").on('click',function () {
+           var treeObj = $.fn.zTree.getZTreeObj('deptTree');
+            var nodes = treeObj.getSelectedNodes();
+            if(nodes == null || nodes.length == 0){
+                layer.alert("请选择部门，再进行添加");
+                return false;
+            }
+            layer.open({
+                type: 1,
+                content: $("#deptAddHtml").html(),
+                title:"部门新增",
+                area: ['30%', '30%'],
+                btn:['保存','关闭'],
+                success:function(layero,index){
+                    $("#deptId").val(nodes[0].id);
+                },
+                yes:function (layero,index) {
+                    $.ajax({
+                        url:"/depts/addDept",
+                        data:$("#deptForm").serialize(),
+                        dataType:"json",
+                        type:"post",
+                        success:function(result){
+                                layer.msg("添加成功");
+                                var deptAll = result.dept;
+                                var newTreeDept={
+                                    id:deptAll.id,
+                                    name:deptAll.deptName,
+                                    pid:deptAll.pid,
+                                    icon:"/static/orgimg/dept2.png"
+                                }
+                                treeObj.addNodes(nodes[0],newTreeDept);
+                                layer.closeAll();
+                        }
+                    })
+                }
+
+
+            })
+        })
+        })
+
+
+
+    // 函数参数必须是字符串，因为二代身份证号码是十八位，而在javascript中，十八位的数值会超出计算范围，造成不精确的结果，导致最后两位和计算的值不一致，从而该函数出现错误。
+    // 详情查看javascript的数值范围
+    function checkIDCard(idcode){
+        // 加权因子
+        var weight_factor = [7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2];
+        // 校验码
+        var check_code = ['1', '0', 'X' , '9', '8', '7', '6', '5', '4', '3', '2'];
+
+        var code = idcode + "";
+        var last = idcode[17];//最后一位
+
+        var seventeen = code.substring(0,17);
+
+        // ISO 7064:1983.MOD 11-2
+        // 判断最后一位校验码是否正确
+        var arr = seventeen.split("");
+        var len = arr.length;
+        var num = 0;
+        for(var i = 0; i < len; i++){
+            num = num + arr[i] * weight_factor[i];
+        }
+
+        // 获取余数
+        var resisue = num%11;
+        var last_no = check_code[resisue];
+
+        // 格式的正则
+        // 正则思路
+        /*
+        第一位不可能是0
+        第二位到第六位可以是0-9
+        第七位到第十位是年份，所以七八位为19或者20
+        十一位和十二位是月份，这两位是01-12之间的数值
+        十三位和十四位是日期，是从01-31之间的数值
+        十五，十六，十七都是数字0-9
+        十八位可能是数字0-9，也可能是X
+        */
+        var idcard_patter = /^[1-9][0-9]{5}([1][9][0-9]{2}|[2][0][0|1][0-9])([0][1-9]|[1][0|1|2])([0][1-9]|[1|2][0-9]|[3][0|1])[0-9]{3}([0-9]|[X])$/;
+
+        // 判断格式是否正确
+        var format = idcard_patter.test(idcode);
+
+        // 返回验证结果，校验码和格式同时正确才算是合法的身份证号码
+        return last === last_no && format ? true : false;
+    }
+</script>
+
+</body>
+
+
+<script type="text/html" id="UserHtml">
+    <form class="layui-form" id="userFormHtml">
+        <input type="hidden" name="id" id="hidenID"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户名</label>
+            <div class="layui-input-block">
+                <input type="text" id="userName" name="userName" lay-verify="title" autocomplete="off" placeholder="请输入用户名" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">真实姓名</label>
+            <div class="layui-input-block">
+                <input type="text" id="realName" name="realName" lay-verify="title" autocomplete="off" placeholder="请输入真实姓名" class="layui-input">
+            </div>
+        </div>
+<div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">生日</label>
+            <div class="layui-input-inline">
+                <input type="text" name="birthday" id="birthday" lay-verify="date" placeholder="请选择生日" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-inline">
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-block">
+                <input type="radio" name="sex" value="1" title="男">
+                <input type="radio" name="sex"   value="2" title="女" checked>
+            </div>
+        </div>
+</div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">手机号</label>
+            <div class="layui-input-block">
+                <input type="text" id="phone" name="phone" lay-verify="title" autocomplete="off" placeholder="请输入手机号" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮箱</label>
+            <div class="layui-input-block">
+                <input type="text" id="email" name="email" lay-verify="title" autocomplete="off" placeholder="请输入邮箱" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">身份证号</label>
+            <div class="layui-input-block">
+                <input type="text" name="idcard" id="idCard" lay-verify="title" autocomplete="off" placeholder="请输入身份证号" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">地区联动</label>
+            <div class="layui-input-inline">
+                <select name="provinceCode" id="provinceCode" lay-filter="provinceCode">
+                    <option value="">请选择省</option>
+                </select>
+            </div>
+            <div class="layui-input-inline">
+                <select name="cityCode" id="cityCode" lay-filter="cityCode">
+                    <option value="">请选择市</option>
+                </select>
+            </div>
+            <div class="layui-input-inline">
+                <select name="areaCode" id="areaCode" lay-filter="areaCode">
+                    <option value="">请选择县/区</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">所在部门</label>
+            <div class="layui-input-block">
+                <div id="selectDept" class="layui-form-select select-tree">
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">个人头像</label>
+            <div class="layui-input-block">
+                <div class="layui-upload">
+                    <button type="button" class="layui-btn" id="test1">上传图片</button>
+                    <div class="layui-upload-list">
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+    </form>
+</script>
+
+<script type="text/html" id="deptUpdateHtml">
+    <form class="layui-form" id="deptUpdateForm">
+
+    </form>
+</script>
+
+<script type="text/html" id="deptAddHtml">
+    <form class="layui-form" id="deptForm">
+        <input type="hidden" id="deptId" name="pid"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">部门名称</label>
+            <div class="layui-input-inline">
+                <input type="text" name="deptName" required lay-verify="required" placeholder="请输入部门名称" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+    </form>
+</script>
+
+</html>

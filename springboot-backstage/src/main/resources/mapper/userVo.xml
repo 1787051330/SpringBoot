@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fh.mapper.IMapperUserVo">
+
+    <select id="queryPageList" resultType="com.fh.bean.vo.UserBeanVo">
+        SELECT
+        u.id,u.userName,u.realName,u.`password`,u.birthday,u.sex,u.phone,u.email,u.idcard,u.provinceCode,p.name as provinceName,u.cityCode,u.areaCode,a.name as areaName,u.imgUrl,u.`status`,u.deptId,c.name as cityName,d.id,d.deptName,d.pid,d.`status`
+        FROM
+        t_user u
+        LEFT JOIN
+        t_dept d
+        ON
+        u.deptId = d.id
+        LEFT JOIN
+        t_province p
+        ON
+        u.provinceCode = p.code_p
+        LEFT JOIN
+        t_city c
+        ON
+        u.cityCode = c.code_c
+        LEFT JOIN
+        t_area a
+        ON
+        u.areaCode = a.code_a
+<where>
+    <if test="userSearch.deptId != null and userSearch.deptId != ''">
+        and u.deptId = #{userSearch.deptId}
+    </if>
+</where>
+    </select>
+    
+</mapper>

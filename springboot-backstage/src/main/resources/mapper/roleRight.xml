@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.fh.mapper.IRoleRightMapper">
+
+    <select id="queryRoleTree" resultType="java.util.Map">
+        select r.id,r.roleName name,0 pId from t_role r
+    </select>
+
+    <select id="queryRightTree" parameterType="java.lang.Integer" resultType="java.util.Map">
+select r.id,r.rightName name,r.pid pId,if(rr.roleId is null,'false','true') checked from t_right r
+LEFT JOIN
+(select roleId,rightId from t_role_right where roleId = #{roleId}) rr
+on r.id = rr.rightId
+    </select>
+
+    <select id="queryRoleRightTree" parameterType="java.lang.Integer" resultType="java.util.Map">
+        select DISTINCT tr.id,tr.rightName name,tr.pid pId from t_right tr
+LEFT JOIN
+t_role_right trr on tr.id=trr.rightId
+LEFT JOIN t_user_role tur on tur.roleId=trr.roleId
+where tur.userId=#{userId}
+    </select>
+    
+    <select id="queryRightUserTree" parameterType="java.lang.Integer" resultType="com.fh.bean.vo.RightUserBeanVo">
+        select o.*,if(r.roleId is null ,'false','true') checked from (
+  select concat('dept_',id) id,deptName name,concat('dept_',pid) pid ,0 sex,'true' nocheck from t_dept
+  union all
+  select concat('user_',id) id,realName name,concat('dept_',deptId) pid,sex ,'false' nocheck from t_user
+) o
+LEFT JOIN (select userId,roleId from t_user_role where roleId=#{roleId}) r on o.id=concat('user_',r.userId)
+
+    </select>
+
+</mapper>

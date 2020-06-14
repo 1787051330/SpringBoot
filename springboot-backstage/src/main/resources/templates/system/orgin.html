@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div class="layui-row">
+    <div class="layui-col-md3">
+        <div class="layui-card">
+            <div class="layui-card-header">部门用户展示</div>
+            <div class="layui-card-body">
+                <!--ztree树-->
+                <ul class="ztree" id="orginTree"></ul>
+            </div>
+        </div>
+    </div>
+    <div class="layui-col-sm1">
+        <div class="layui-card">
+            <div class="layui-card-header"></div>
+        </div>
+    </div>
+    <div class="layui-col-md3">
+        <div class="layui-card">
+            <div class="layui-card-header" id="userRole">
+            </div>
+            <div class="layui-card-body">
+                <!--ztree树-->
+                <ul class="ztree" id="roleTree"></ul>
+            </div>
+        </div>
+    </div>
+    <div class="layui-col-sm1">
+        <div class="layui-card">
+            <div class="layui-card-header"></div>
+        </div>
+    </div>
+    <div class="layui-col-md3">
+        <div class="layui-card">
+            <div class="layui-card-header" id="roleRight"></div>
+            <div class="layui-card-body">
+                <!--ztree树-->
+                <ul class="ztree" id="rightTree"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var orginSettings = {
+        view:{
+            selectedMulti:false
+        },
+        callback:{
+            onClick:orginClick
+        }
+    };
+    var roleSetting = {
+        data: {
+            simpleData: {
+                enable: true,
+            }
+        },
+        check:{
+            enable:true,
+            chkStyle:"checkbox",
+        },
+        callback:{
+            onClick:orginClick
+        }
+    };
+    var rightSetting = {
+        view:{
+            selectedMulti:false
+        },
+        data: {
+            simpleData: {
+                enable: true,
+            }
+        },
+    }
+    layui.use(['table'],function () {
+        var table = layui.table;
+        $.ajax({
+            url:"/userRoles/queryUserDept",
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                $.fn.zTree.init($("#orginTree"),orginSettings,result).expandAll(true);
+            }
+        })
+    })
+    var userId;
+    function orginClick(event,treeId,treeNode){
+         userId = treeNode.id.substring(5);
+        if(treeNode.id.indexOf("user_") != -1){
+            var userRoleHtml = "";
+            userRoleHtml += "用户赋予角色\n" +
+                "                    <button type=\"button\" class=\"layui-btn layui-btn-sm layui-btn-radius\" onclick=\"addUserRole()\">给用户授予角色</button>";
+            $("#userRole").html(userRoleHtml);
+            var roleRightHtml = "";
+            roleRightHtml += "角色拥有权限",
+            $("#roleRight").html(roleRightHtml);
+            $.ajax({
+                url:"/userRoles/queryRoleTree",
+                dataType:"json",
+                type:"post",
+                data:{
+                    userId:userId
+                },
+                success:function(result){
+                    $.fn.zTree.init($("#roleTree"),roleSetting,result);
+                    $.ajax({
+                        url:"/roleRights/queryRoleRightTree",
+                        dataType:"json",
+                        type:"post",
+                        data:{
+                            userId:userId
+                        },
+                        success:function(result){
+                            $.fn.zTree.init($("#rightTree"),rightSetting,result).expandAll(true);
+                        }
+                    })
+                }
+            })
+        }else{
+            $("#roleTree").html("");
+        }
+    }
+
+
+    function queryRight(){
+        var roleObj = $.fn.zTree.getZTreeObj("roleTree");
+        alert(JSON.stringify(roleObj))
+        var nodes = roleObj.getCheckedNodes(true);
+        for(var i = 0 ; i < nodes.length ; i ++){
+            alert(JSON.stringify(nodes[i].id))
+        }
+
+
+        $.ajax({
+            url:"",
+            data:{},
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                $.fn.zTree.init($("#rightTree"),rightSetting,result)
+            }
+        })
+    }
+
+    //给角色赋予用户
+    function addUserRole(){
+        //首先判断是否选中用户节点
+        var orginObject = $.fn.zTree.getZTreeObj("orginTree");
+        var orginNodes = orginObject.getSelectedNodes();
+        if(orginNodes.length == 0){
+            layer.msg("请选中用户节点赋予角色");
+            return false;
+        }
+        var userId = orginNodes[0].id.substring(5);
+        var roleObject = $.fn.zTree.getZTreeObj("roleTree");
+        var roleNodes = roleObject.getCheckedNodes(true);
+        var roleIdss = [];
+        for(var i = 0 ; i < roleNodes.length;i++){
+            roleIdss.push(roleNodes[i].id);
+        }
+        var roleIds = JSON.stringify(roleIdss);
+        $.ajax({
+            url:"/userRoles/addUserRole",
+            data:{
+                userId:userId,
+                roleIds:roleIds
+            },
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                if(result.code == 200){
+                    layer.msg("用户赋予角色成功")
+                    $.ajax({
+                        url:"/roleRights/queryRoleRightTree",
+                        dataType:"json",
+                        type:"post",
+                        data:{
+                            userId:userId
+                        },
+                        success:function(result){
+                            $.fn.zTree.init($("#rightTree"),rightSetting,result).expandAll(true);
+                        }
+                    })
+                }else{
+                    layer.msg("用户赋予角色失败")
+                }
+            }
+        })
+    }
+
+
+   /* function addUserRole(){
+        //给角色赋予用户
+        var orginTreeObj = $.fn.zTree.getZTreeObj("orginTree");
+        var orginNodes = orginTreeObj.getSelectedNodes();
+        if(orginNodes.length == 0){
+            layer.msg("请选中用户节点");
+            return false;
+        }
+        var userId = orginNodes[0].id.substring(5);
+        var roleTreeObj = $.fn.zTree.getZTreeObj("roleTree");
+        var roleNodes = roleTreeObj.getCheckedNodes(true);
+        var roleIdss = [];
+        for(var i = 0 ; i <roleNodes.length; i++){
+            roleIdss.push(roleNodes[i].id);
+        }
+        var roleIds = JSON.stringify(roleIdss);
+        $.ajax({
+            url:"/userRoles/addUserRole",
+            data:{
+                userId:userId,
+                roleIds:roleIds
+            },
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                if(result.code == 200){
+                    layer.msg("用户赋予角色成功");
+                }else{
+                    layer.msg("用户赋予角色失败");
+                }
+            }
+        })
+    }*/
+</script>
+</body>
+</html>

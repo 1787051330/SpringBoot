@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div class="layui-col-md4">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <button type="button" class="layui-btn layui-btn-sm" id="addRole"><i class="layui-icon"></i></button>
+            <button type="button" class="layui-btn layui-btn-normal layui-btn-sm" id="updateRight"><i class="layui-icon"></i></button>
+        </div>
+        <div class="layui-card-body">
+            <!--ztree树-->
+            <ul class="ztree" id="roleTree"></ul>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var roleSetting = {
+        view:{
+            selectedMulti:false
+        },
+        data: {
+            simpleData: {
+                enable: true,
+            }
+        },
+    }
+    layui.use(['form'],function () {
+        var form = layui.form;
+        //加载角色ztree
+        $.ajax({
+            url:"/roles/queryTreeRole",
+            dataType:"json",
+            type:"post",
+            success:function (result) {
+                $.fn.zTree.init($("#roleTree"),roleSetting,result);
+            }
+        });
+        $('#addRole').on('click',function () {
+           layer.open({
+               type:1,
+               title:"角色新增",
+               area:["30%","30%"],
+               btn:["保存","关闭"],
+               content:$("#roleHtml").html(),
+               success:function(layero,index){
+
+                   form.render();
+               },
+               yes:function(layero,index){
+                   addRoleTree();
+                   form.render();
+               }
+           })
+        })
+
+        $("#updateRight").on('click',function () {
+            var roleTreeObj = $.fn.zTree.getZTreeObj("roleTree");
+            var roleNodes = roleTreeObj.getSelectedNodes();
+            if(roleNodes == null || roleNodes.length == 0){
+                layer.msg("请选中要修改的角色");
+                return false;
+            }
+            var roleId = roleNodes[0].id;
+            $.ajax({
+                url:"/roles/queryRoleTreeId",
+                data:{roleId:roleId},
+                dataType:"json",
+                type:"post",
+                success:function(result){
+                    $("#roleId").val(result.role.id);
+                    $("#roleName").val(result.role.roleName);
+                    $("#roleKey").val(result.role.roleKey);
+                }
+            })
+
+            updateRole();
+
+        })
+        function updateRole(){
+            var roleTreeObj = $.fn.zTree.getZTreeObj("roleTree");
+            var roleNodes = roleTreeObj.getSelectedNodes();
+            var nodes = roleTreeObj.getNodes();
+            layer.open({
+                type:1,
+                title:"角色修改",
+                area:["30%","30%"],
+                btn:["保存","关闭"],
+                content:$("#roleHtml").html(),
+                success:function(layero,index){
+                    form.render();
+                },
+                yes:function(layero,index){
+                    $.ajax({
+                        url:"/roles/addRoleTree",
+                        data:$("#roleForm").serialize(),
+                        dataType:"json",
+                        type:"post",
+                        success:function(result){
+                            if(result.code == 200){
+                                layer.msg("修改成功");
+                                if(nodes.length > 0){
+                                    nodes[0].id=result.role.id,
+                                    nodes[0].name=result.role.roleName,
+                                    nodes[0].pid = 0;
+                                    roleTreeObj.updateNode(nodes[0]);
+                                }
+                                layer.closeAll();
+                            }else{
+                                layer.alert("修改失败，异常信息为："+result.message);
+                            }
+
+                        }
+                    })
+                }
+            })
+        }
+
+
+        function addRoleTree() {
+            var roleObj = $.fn.zTree.getZTreeObj("roleTree");
+            var roleNodes = roleObj.getSelectedNodes();
+            $.ajax({
+                url:"/roles/addRoleTree",
+                type:"post",
+                data:$("#roleForm").serialize(),
+                dataType:"json",
+                success:function(result){
+                    var roleAll = result.role;
+                    if(result.code == 200){
+                        layer.msg("添加成功");
+                        var roleTree={
+                        id:roleAll.id,
+                        pid:0,
+                        name:roleAll.roleName
+                        }
+                        roleObj.addNodes(roleNodes[0],roleTree);
+                        layer.closeAll();
+                    }else{
+                        layer.alert("保存失败，异常信息为："+result.message);
+                    }
+                }
+            })
+        }
+        
+    })
+</script>
+
+<script type="text/html" id="roleHtml">
+    <form class="layui-form" id="roleForm">
+        <input type="hidden" name="id" id="roleId"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色名称</label>
+            <div class="layui-input-inline">
+                <input type="text" name="roleName" id="roleName" required lay-verify="required" placeholder="请输入角色名称" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色关键字</label>
+            <div class="layui-input-inline">
+                <input type="text" name="roleKey" id="roleKey" required lay-verify="required" placeholder="请输入角色关键字" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+    </form>
+</script>
+
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+        <div class="layui-col-md4">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <button type="button" class="layui-btn layui-btn-sm" id="addRight"><i class="layui-icon"></i></button>
+                    <button type="button" class="layui-btn layui-btn-normal layui-btn-sm" id="updateRight"><i class="layui-icon"></i></button>
+                </div>
+                <div class="layui-card-body">
+                    <!--ztree树-->
+                    <ul class="ztree" id="rightTree"></ul>
+                </div>
+            </div>
+        </div>
+</body>
+<script type="text/javascript">
+    var rightSetting = {
+        view:{
+            selectedMulti:false
+        },
+        data: {
+            simpleData: {
+                enable: true,
+            }
+        },
+    }
+    layui.use(['form'],function () {
+        var form = layui.form;
+
+        $.ajax({
+            url:"/rights/queryRightTree",
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                //加载权限树
+                $.fn.zTree.init($("#rightTree"),rightSetting,result).expandAll(true);
+            }
+        })
+        function radioDis(){
+            form.on('radio(typeRadio)',function (data) {
+                if(data.value == 1){
+                    $("#pathUrl").removeClass("layui-disabled");
+                    $("#pathUrl").removeAttr("disabled");
+                }else{
+                    $("#pathUrl").addClass("layui-disabled");
+                    $("#pathUrl").attr("disabled",true);
+                }
+            })
+        }
+        //修改权限ztree
+        $("#updateRight").on('click',function () {
+            //获取权限树
+            var rightObj = $.fn.zTree.getZTreeObj("rightTree");
+            var rightNodes = rightObj.getSelectedNodes();
+            if(rightNodes == null || rightNodes.length == 0){
+                layer.msg("请选择节点修改");
+                return false;
+            }
+            var rightId = rightNodes[0].id;
+            var rightName = rightNodes[0].name;
+            var rightpId = rightNodes[0].pId;
+            queryRightById(rightId);
+            layer.open({
+                type:1,
+                title:"权限修改",
+                area:["30%","45%"],
+                btn:["保存","关闭"],
+                content:$("#rightHtml").html(),
+                success:function(layero,index){
+                    radioDis();
+                    $("#rightName").val(rightName);
+                    $("#right").val(rightId);
+                    $("#rightId").val(rightpId);
+                    form.render();
+                },
+                yes:function (layero,index) {
+                    updateRight(rightId);
+                    form.render();
+                }
+            })
+        })
+        //添加权限ztree
+        $("#addRight").on('click',function () {
+            //获取权限树
+            var rightObj = $.fn.zTree.getZTreeObj("rightTree");
+            var rightNodes = rightObj.getSelectedNodes();
+            if(rightNodes == null || rightNodes.length == 0){
+                layer.msg("请选择节点添加");
+                return false;
+            }
+            var rightId = rightNodes[0].id;
+            layer.open({
+                type:1,
+                area:["30%","45%"],
+                content:$("#rightHtml").html(),
+                btn:["保存","关闭"],
+                title:"权限新增",
+                success:function (layero,index) {
+                    radioDis();
+                    form.render();
+                },
+                yes:function (layero,index) {
+                    addRight(rightId);
+                    form.render();
+                }
+            })
+        })
+    })
+    //权限修改回显
+    function  queryRightById(rightId) {
+        $.ajax({
+            url:"/rights/queryRightById",
+            data:{
+                rightId:rightId
+            },
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                var type = result.right.type;
+                $("#pathUrl").val(result.right.pathUrl);
+                $("#rightKey").val(result.right.rightKey);
+                if(type == 2){
+                    $("#rightForm [name='type'][value='2']").attr("checked",true);
+                }
+
+            }
+        })
+    }
+
+    //权限修改
+    function updateRight(rightId){
+        var rightObj = $.fn.zTree.getZTreeObj("rightTree");
+        var rightNodes = rightObj.getSelectedNodes();
+        var rightgetNodes = rightObj.getNodes();
+        $.ajax({
+            url:"/rights/updateRight",
+            data:$("#rightForm").serialize(),
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                if(result.code == 200){
+                    layer.msg("修改成功");
+                    if(rightgetNodes.length > 0){
+                        rightNodes[0].id = result.data.id;
+                        rightNodes[0].name = result.data.rightName;
+                        rightNodes[0].pid = result.data.pid;
+                        rightObj.updateNode(rightNodes[0]);
+                    }
+                    layer.closeAll();
+                }else{
+                    layer.msg("修改权限失败,异常为:"+result.message);
+                }
+            }
+        })
+    }
+
+
+
+    //权限新增
+    function addRight(rightId){
+        var rightObj = $.fn.zTree.getZTreeObj("rightTree");
+        var rightNodes = rightObj.getSelectedNodes();
+        $("#rightId").val(rightId);
+        $.ajax({
+            url:"/rights/addRight",
+            data:$("#rightForm").serialize(),
+            dataType:"json",
+            type:"post",
+            success:function(result){
+                if(result.code == 200){
+                    layer.msg("添加权限成功");
+                    var rightAll = result.right;
+                    var nodeRightAdd = {
+                        id:rightAll.id,
+                        name:rightAll.rightName,
+                        pid:rightAll.pid,
+                    }
+                    rightObj.addNodes(rightNodes[0],nodeRightAdd),
+                    layer.closeAll()
+                }else{
+                    layer.msg("添加权限失败,异常为:"+result.message);
+                }
+            }
+        })
+    }
+</script>
+<script type="text/html" id="rightHtml">
+    <form class="layui-form" id="rightForm">
+        <input type="hidden" id="rightId" name="pid"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">部门名称</label>
+            <div class="layui-input-inline">
+                <input type="text" name="rightName" id="rightName" required lay-verify="required" placeholder="请输入权限名称" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">类型</label>
+            <div class="layui-input-block">
+                <input type="radio" name="type" lay-filter="typeRadio" value="1" title="菜单" checked>
+                <input type="radio" name="type" lay-filter="typeRadio" value="2" title="按钮" >
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">路径</label>
+            <div class="layui-input-inline">
+                <input type="text" name="pathUrl" id="pathUrl" required lay-verify="required" placeholder="请输入路径" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">权限关键字</label>
+            <div class="layui-input-inline">
+                <input type="text" name="rightKey" id="rightKey" required lay-verify="required" placeholder="请输入权限关键字" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <input type="hidden" id="right" name="id"/>
+    </form>
+</script>
+</html>
