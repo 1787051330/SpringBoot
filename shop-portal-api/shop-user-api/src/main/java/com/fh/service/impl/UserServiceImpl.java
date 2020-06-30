@@ -21,6 +21,7 @@ public class UserServiceImpl implements IUserService {
     @Autowired
     private IUserMapper userMapper;
 
+
     @Override
     public ShopUserBeanPo queryShopUser(String phone) {
 

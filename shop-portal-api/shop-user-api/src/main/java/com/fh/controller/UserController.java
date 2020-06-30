@@ -1,10 +1,11 @@
 package com.fh.controller;
 
+import com.fh.jwt.JwtUtils;
 import com.fh.po.ShopUserBeanPo;
 import com.fh.service.IUserService;
 import com.fh.utils.ResponseServer;
 import com.fh.utils.ServerEnum;
-import com.fh.utils.jwt.jwtUtils;
+import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ public class UserController {
 
     @Autowired
     private IUserService userService;
+
+    @Value("${token.headerToken}")
+    private String headerToken;
 
     @Value("${token.securityKey}")
     private String securityKey;
@@ -87,10 +91,30 @@ public class UserController {
         map.put("userId",shopUserBeanPo.getShopId());
         map.put("phone",shopUserBeanPo.getPhone());
         map.put("cartId",shopUserBeanPo.getCartId());
-        String token = jwtUtils.createToken(map, securityKey);
         //注册/登录成功之后删除redis中的验证码
         redisTemplate.delete("code_"+phone);
-        return ResponseServer.success(token);
+        Map<String,Object> resultMap = JwtUtils.createToken(map, securityKey);
+        return ResponseServer.success(resultMap);
    }
+
+
+   @GetMapping("/{token}")
+   public ResponseServer refreshToken(String token){
+       //判断token不为空
+       if(StringUtils.isBlank(token)){
+           return ResponseServer.error(ServerEnum.TOKEN_ISNULL);
+       }
+       //验证token值
+       ResponseServer responseServer = JwtUtils.resolveToken(token, securityKey);
+       int size = 200;
+       if(responseServer.getCode() != size){
+           return responseServer;
+       }
+       Claims userInfo = JwtUtils.getUserInfo(token, securityKey);
+       Map<String,Object> tokenMap = JwtUtils.createToken(userInfo,securityKey);
+       return ResponseServer.success(tokenMap);
+   }
+
+
 
 }

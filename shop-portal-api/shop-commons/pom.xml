@@ -12,7 +12,6 @@
     <artifactId>shop-commons</artifactId>
 
     <dependencies>
-        <!--jwt-->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>

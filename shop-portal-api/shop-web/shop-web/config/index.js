@@ -17,6 +17,13 @@ module.exports = {
         pathRewrite:{
           '^/userService':'/shop-user-api'
         }
+      },
+      '/pruductService':{
+        target: "http://localhost:9050",
+        changeOrigin: true,
+        pathRewrite:{
+          '^/pruductService':'/shop-product-api'
+        }
       }
       },
 

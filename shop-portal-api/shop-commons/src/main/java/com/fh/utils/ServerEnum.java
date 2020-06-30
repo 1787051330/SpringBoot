@@ -9,6 +9,9 @@ package com.fh.utils;
  */
 public enum ServerEnum {
 
+    /**
+     *
+     */
     SUCCESS(200,"操作成功"),
     SUCCESS_LAYUI(0,"操作成功"),
     DEL_DEPT_SCUCCESS(201,"删除部门成功"),

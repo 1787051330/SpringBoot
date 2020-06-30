@@ -74,40 +74,46 @@
             phone:this.loginForm.phone,
           }
         }).then(result=>{
-         alert(JSON.stringify(result.data.msg));
+          this.$alert(result.data.msg, '提示框', {
+            confirmButtonText: '确定',
+          });
         })
       },
-      loginSubmit(){
-        if(this.loginForm.phone == null || this.loginForm.phone.length == 0){
+      loginSubmit: function () {
+        if (this.loginForm.phone == null || this.loginForm.phone.length == 0) {
           this.$alert('请输入手机号获取验证码', '提示框', {
             confirmButtonText: '确定',
           });
           return false;
         }
-        if(this.loginForm.code == null || this.loginForm.code.length == 0){
-          this.$alert("请输入验证码","提示框",{
+        if (this.loginForm.code == null || this.loginForm.code.length == 0) {
+          this.$alert("请输入验证码", "提示框", {
             confirmButtonText: '确定',
           });
           return false;
         }
 
         this.$http({
-          url:"/userService/users",
-          method:"post",
-          params:{
-            phone:this.loginForm.phone,
-            code:this.loginForm.code
+          url: "/userService/users",
+          method: "post",
+          params: {
+            phone: this.loginForm.phone,
+            code: this.loginForm.code
           }
-        }).then(result=>{
-          if(result.data.code != 200){
-            this.$alert(result.data.msg,"提示框",{
+        }).then(result => {
+          if (result.data.code != 200) {
+            this.$alert(result.data.msg, "提示框", {
               confirmButtonText: '确定',
             });
             return false;
           }
-          this.$alert(result.data.data,"提示框",{
+          /*this.$alert(result.data.data, "提示框", {
             confirmButtonText: '确定',
-          });
+          });*/
+          this.$store.dispatch("add_token",result.data.data.token);
+          this.$store.dispatch("add_expTime",result.data.data.expTime);
+          this.$store.dispatch("add_refreshTime",result.data.data.refreshTime);
+          this.$router.push("product");
         })
       }
     }
